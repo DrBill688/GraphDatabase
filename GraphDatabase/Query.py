@@ -4,6 +4,7 @@
 """
 from typing import Self
 from enum import StrEnum
+import re, datetime
 from . import forcetype
 
 
@@ -26,9 +27,24 @@ class TypedCompare():
             raise ValueError(f'Invalid parms to compare: {type(v1) == str} {type(op) == Operator} {type(v2) == str}')
         return
     def typeCompatible(self) -> bool: # change their types
-        type1 = 'str'
-        type2 = 'str'
-        return type1 == type2
+        float_re = r'^([0-9]*[.])?[0-9]+'
+        bool_re = r'^(TRUE|FALSE)'
+        date_re = r'^(\d{4})-(\d{2})-(\d{2})'
+        if type(self.v1) == str:
+            if re.fullmatch(float_re, self.v1) is not None:
+                self.v1 = float(self.v1)
+            elif re.fullmatch(bool_re, self.v1.upper()) is not None:
+                self.v1 = self.v1.upper() == 'TRUE'
+            elif re.fullmatch(date_re, self.v1.upper()) is not None:
+                self.v1 = datetime.date(self.v1)
+        if type(self.v2) == str:
+            if re.fullmatch(float_re, self.v2) is not None:
+                self.v2 = float(self.v2)
+            elif re.fullmatch(bool_re, self.v2.upper()) is not None:
+                self.v2 = self.v2.upper() == 'TRUE'
+            elif re.fullmatch(date_re, self.v2.upper()) is not None:
+                self.v2 = datetime.date(self.v2)
+        return type(self.v1) == type(self.v2)
     def _typedCompare(self) -> bool:
         if self.op == Operator.EQUALS:
             return self.v1 == self.v2
