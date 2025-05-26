@@ -34,7 +34,7 @@ class QueryResult():
         self.QF = qf 
         self.rootType = forcetype.string(root_type)
         return
-    def compare(self, val):
+    def compare(self, val): # need to expand this to beyond simple strings.
         strType = val.split(self.G.delimiter)[0]
         strVal = val.split(self.G.delimiter)[1]
         if strType == self.QF.strModelType:
