@@ -13,21 +13,30 @@ DG.addRelationship('Layer1', 'A', 'Layer1_description', 'This is A', srcRef)
 DG.addRelationship('Layer1', 'A', 'Layer2', 1, srcRef)
 DG.addRelationship('Layer1', 'A', 'Layer2', 1, ('SourceName','20250526'))
 DG.addRelationship('Layer2', 1, 'Layer2_description', 'Widget1', ('SourceName','20250526'))
+DG.addRelationship('Layer2', 1, 'Layer2_criteria', 'True', ('SourceName','20250526'))
 print('---------------------------')
 print('Graph details:')
 print(DG)
-print(DG.G.edges)
 print('---------------------------')
-print('Query example:')
+print('Query examples:')
 q = DG.query().perspective('Layer1') \
               .attributes('Layer1', 'Layer2_description') \
               .restrictions(None) \
               .result() 
 print(q)
-print('---------------------------')
-print('Expecting an exception:')
+print('Query examples:')
 q = DG.query().perspective('Layer1') \
-              .restrictions([('Layer2', 'eq', 1), ('and', 'Layer3_missing', 'eq', '2025-10-02')]) \
+              .attributes('Layer1', 'Layer2_description') \
+              .restrictions([('Layer2_criteria', 'eq', 'True')]) \
               .result() 
 print(q)
+print('---------------------------')
+print('Expecting an exception:')
+try:
+    q = DG.query().perspective('Layer1') \
+                  .restrictions([('Layer2', 'eq', 1), ('and', 'Layer3_missing', 'eq', '2025-10-02')]) \
+                      .result() 
+    print('ERROR:  SHOULD HAVE THROWN AN EXCEPTION!  Layer3_missing is not in the graph.')
+except ValueError as e:
+    print(f'Correctly received: {e}')
 print('End of test harness.')
