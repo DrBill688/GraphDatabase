@@ -35,8 +35,18 @@ class QueryResult():
         self.rootType = forcetype.string(root_type)
         return
     def compare(self, val):
-        print(f'Does {val} {self.QF.filterOp} {self.QF.strValue}?')
-        return True
+        strType = val.split(self.G.delimiter)[0]
+        strVal = val.split(self.G.delimiter)[1]
+        if strType == self.QF.strModelType:
+            if self.QF.filterOp == Operator.EQUALS:
+                return True if forcetype.string(strVal) == self.QF.strValue else False
+            elif self.QF.filterOp == Operator.NOTEQUALS:
+                return True if forcetype.string(strVal) != self.QF.strValue else False
+            elif self.QF.filterOp == Operator.LESS_THAN:
+                return True if forcetype.string(strVal) < self.QF.strValue else False
+            elif self.QF.filterOp == Operator.GREATER_THAN:
+                return True if forcetype.string(strVal) > self.QF.strValue else False
+        return False #wrong type?
     def result(self) -> list:
         res = []
         if self.QF is not None:
@@ -72,7 +82,6 @@ class Query():
             self.filters = None
         else:
             for arg in args:
-#                print(arg)
                 combine_operator = None
                 model_type = None
                 operator = None
@@ -93,10 +102,14 @@ class Query():
                     self.filters = []
                 self.filters.append(QueryFilter(self.G, combine_operator, model_type, operator, value))
         return self
+    def expandLabels(self) -> Self:
+        for label in self.labels:
+            for stop in self.G.shortest_path(label, self.root):
+                if stop not in self.labels:
+                    self.labels.append(stop)
+        return self
     def result(self) -> dict:
-#        print(f'Perspective: {self.root}')
-#        print(f'Attributes: {self.labels}')
-#        print(f'Restrictions: {self.filters if self.filters is None else [str(m) for m in self.filters]}')
+        self.expandLabels()
         rootList = []
         if self.filters is None:
             rootList = QueryResult(self.G, self.root, self.filters).result()
@@ -106,16 +119,34 @@ class Query():
                     rootList = list(set(rootList) | set(QueryResult(self.G, self.root, f).result()))
                 else:
                     rootList = list(set(rootList) & set(QueryResult(self.G, self.root, f).result()))
-#        print(f'ROOTLIST are {self.root}: {rootList}')
         return self.expand(rootList)
+    def addToResult(self, res, pt, pv, ct, cv):
+        if pt in self.labels:
+            if pt not in res.keys():
+                res[pt] = {}
+            if ct not in self.labels:
+                if pv not in res[pt].keys():
+                    res[pt][pv] = {}
+            else:
+                if pv not in res[pt].keys():
+                    res[pt][pv] = {ct:cv}
+                else:
+                    existingTag = res[pt][pv].get(ct)
+                    if existingTag is None:
+                        res[pt][pv][ct] = cv
+                    else:
+                        oldvals = existingTag
+                        if type(oldvals) == str:
+                            oldvals = [oldvals]
+                        if cv not in oldvals:
+                            oldvals.append(cv)
+                            res[pt][pv][ct] = oldvals
+        return
     def expand(self, root_list) ->dict:
         res = {}
         for node in root_list:
             for pt, pv, ct, cv in self.G.traverse(self.root, node):
-                if pt not in res.keys():
-                    res[pt] = {}
-                if pv not in res[pt].keys():
-                    res[pt][pv] = {ct:cv}
-                else:
-                    res[pt][pv][ct] = cv
+                self.addToResult(res, pt, pv, ct, cv)
+            for ct, cv in self.G.predecessors(self.root, node):
+                self.addToResult(res, self.root, node, ct, cv)
         return res

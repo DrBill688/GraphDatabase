@@ -24,10 +24,20 @@ class GraphDatabase:
     def query(self) -> Query.Query:
         return Query.Query(self)
     def shortest_path(self, source: str, destination: str):
-        return nx.shortest_path(self.G.reverse(), forcetype.string(source), forcetype.string(destination))
+        strSource = forcetype.string(source)
+        strDest = forcetype.string(destination)
+        if nx.has_path(self.G, strSource, strDest):
+            return nx.shortest_path(self.G, strSource, strDest)
+        elif nx.has_path(self.G.reverse(), strSource, strDest):
+            return nx.shortest_path(self.G.reverse(), strSource, strDest)
+        else:
+            raise ValueError(f'No path between {strSource} and {strDest}')
     def successors(self, model_type) -> list:
         strModelType = forcetype.string(model_type)
         return [m for m in self.G.successors(strModelType) if m.startswith(f'{strModelType}{self.delimiter}')]
+    def predecessors(self, node_type, node_val) -> list:
+        node = f'{node_type}{self.delimiter}{node_val}'
+        return [(m.split(self.delimiter)[0], m.split(self.delimiter)[1]) for m in self.G.predecessors(node) if len(m.split(self.delimiter)) == 2]
     def fieldList(self) -> list:
         return list(self.G.successors(self._MODEL_TYPE))
     def findall(self, model_type: str) -> list:
