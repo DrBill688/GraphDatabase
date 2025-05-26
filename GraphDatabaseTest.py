@@ -3,6 +3,8 @@
 @author: William N. Roney, ScD
 """
 
+import json #for printing
+
 import GraphDatabase as gdb
 
 print('Start of test harness.')
@@ -14,6 +16,8 @@ DG.addRelationship('Layer1', 'A', 'Layer2', 1, srcRef)
 DG.addRelationship('Layer1', 'A', 'Layer2', 1, ('SourceName','20250526'))
 DG.addRelationship('Layer2', 1, 'Layer2_description', 'Widget1', ('SourceName','20250526'))
 DG.addRelationship('Layer2', 1, 'Layer2_criteria', 'True', ('SourceName','20250526'))
+DG.addRelationship('Layer2', 1, 'Layer3', 2)
+DG.addRelationship('Layer3', 2, 'Layer3_description', 'Modelo')
 print('---------------------------')
 print('Graph details:')
 print(DG)
@@ -23,13 +27,13 @@ q = DG.query().perspective('Layer1') \
               .attributes('Layer1', 'Layer2_description') \
               .restrictions(None) \
               .result() 
-print(q)
+print(json.dumps(q, indent=2))
 print('Query examples:')
 q = DG.query().perspective('Layer1') \
               .attributes('Layer1', 'Layer2_description') \
               .restrictions([('Layer2_criteria', 'eq', 'True')]) \
               .result() 
-print(q)
+print(json.dumps(q, indent=2))
 print('---------------------------')
 print('Expecting an exception:')
 try:

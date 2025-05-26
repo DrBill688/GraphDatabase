@@ -28,6 +28,24 @@ class QueryFilter():
     def __str__(self):
         return f'{self.combineOp} {self.strModelType} {self.filterOp} {self.strValue}'
 
+class QueryResult():
+    def __init__(self, DG, root_type, qf):
+        self.G = DG
+        self.QF = qf 
+        self.rootType = forcetype.string(root_type)
+        return
+    def compare(self, val):
+        print(f'Does {val} {self.QF.filterOp} {self.QF.strValue}?')
+        return True
+    def result(self) -> list:
+        res = []
+        if self.QF is not None:
+            curlist = [m for m in self.G.successors(self.QF.strModelType) if self.compare(m) == True]
+            res = [m for m in self.G.find(self.rootType, curlist)]
+        else:
+            res = self.G.findall(self.rootType)
+        return res
+
 class Query():
     def __init__(self, DG):
         self.G = DG
@@ -54,7 +72,7 @@ class Query():
             self.filters = None
         else:
             for arg in args:
-                print(arg)
+#                print(arg)
                 combine_operator = None
                 model_type = None
                 operator = None
@@ -76,8 +94,28 @@ class Query():
                 self.filters.append(QueryFilter(self.G, combine_operator, model_type, operator, value))
         return self
     def result(self) -> dict:
-        print(f'Perspective: {self.root}')
-        print(f'Attributes: {self.labels}')
-        print(f'Restrictions: {self.filters if self.filters is None else [str(m) for m in self.filters]}')
-        return {}
-    
+#        print(f'Perspective: {self.root}')
+#        print(f'Attributes: {self.labels}')
+#        print(f'Restrictions: {self.filters if self.filters is None else [str(m) for m in self.filters]}')
+        rootList = []
+        if self.filters is None:
+            rootList = QueryResult(self.G, self.root, self.filters).result()
+        else:
+            for f in self.filters:
+                if f.combineOp == CombineOperator.OR:
+                    rootList = list(set(rootList) | set(QueryResult(self.G, self.root, f).result()))
+                else:
+                    rootList = list(set(rootList) & set(QueryResult(self.G, self.root, f).result()))
+#        print(f'ROOTLIST are {self.root}: {rootList}')
+        return self.expand(rootList)
+    def expand(self, root_list) ->dict:
+        res = {}
+        for node in root_list:
+            for pt, pv, ct, cv in self.G.traverse(self.root, node):
+                if pt not in res.keys():
+                    res[pt] = {}
+                if pv not in res[pt].keys():
+                    res[pt][pv] = {ct:cv}
+                else:
+                    res[pt][pv][ct] = cv
+        return res

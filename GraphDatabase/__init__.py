@@ -23,8 +23,26 @@ class GraphDatabase:
         return str(self.G)
     def query(self) -> Query.Query:
         return Query.Query(self)
+    def shortest_path(self, source: str, destination: str):
+        return nx.shortest_path(self.G.reverse(), forcetype.string(source), forcetype.string(destination))
+    def successors(self, model_type) -> list:
+        strModelType = forcetype.string(model_type)
+        return [m for m in self.G.successors(strModelType) if m.startswith(f'{strModelType}{self.delimiter}')]
     def fieldList(self) -> list:
-        return list(self.G.successors('ModelType'))
+        return list(self.G.successors(self._MODEL_TYPE))
+    def findall(self, model_type: str) -> list:
+        prefix = f'{model_type}{self.delimiter}'
+        return [m.replace(prefix, '') for m in self.G.successors(model_type) if m.startswith(prefix)]
+    def find(self, model_type: str, child_node_list: list) -> list:
+        res = []
+        searchlist = child_node_list
+        prefix = f'{model_type}{self.delimiter}'
+        if type(child_node_list) == str:
+            searchlist = [child_node_list]
+        for edge in nx.edge_dfs(self.G.reverse(), searchlist):
+            if edge[1].startswith(prefix):
+                res.append(edge[1].replace(prefix, ''))
+        return res
     def addEdge(self, uNode: str, vNode: str, source_ref: str) -> Self:
         strUNode = forcetype.string(uNode)
         strVNode = forcetype.string(vNode)
@@ -57,5 +75,10 @@ class GraphDatabase:
         uNode = f'{strParentType}{self.delimiter}{strParentValue}'
         vNode = f'{strChildType}{self.delimiter}{strChildValue}'
         self.addModelRelationship(strParentType, strChildType, strSourceRef)
+        self.addEdge(strParentType, uNode, strSourceRef)
+        self.addEdge(strChildType, vNode, strSourceRef)
         self.addEdge(uNode, vNode, strSourceRef)
         return self
+    def traverse(self, start_type: str, start_value:str) -> list:
+        return [(m[0].split(self.delimiter)[0], m[0].split(self.delimiter)[1], m[1].split(self.delimiter)[0], m[1].split(self.delimiter)[1]) for m in nx.edge_bfs(self.G, f'{start_type}{self.delimiter}{start_value}')]
+    
