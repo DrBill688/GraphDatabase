@@ -16,6 +16,34 @@ class Operator(StrEnum):
     GREATER_THAN = 'GT'
     LESS_THAN = 'LT'
 
+class TypedCompare():
+    def __init__(self, v1: str , op: Operator, v2: str):
+        if type(v1) == str and type(op) == Operator and type(v2) == str:
+            self.v1 = v1
+            self.v2 = v2
+            self.op = op
+        else:
+            raise ValueError(f'Invalid parms to compare: {type(v1) == str} {type(op) == Operator} {type(v2) == str}')
+        return
+    def typeCompatible(self) -> bool: # change their types
+        type1 = 'str'
+        type2 = 'str'
+        return type1 == type2
+    def _typedCompare(self) -> bool:
+        if self.op == Operator.EQUALS:
+            return self.v1 == self.v2
+        elif self.op == Operator.NOT_EQUALS:
+            return self.v1 != self.v2
+        elif self.op == Operator.LESS_THAN:
+            return self.v1 < self.v2
+        elif self.op == Operator.GREATER_THAN:
+            return self.v1 > self.v2
+        return False
+    def result(self) -> bool:
+        if self.typeCompatible():
+            return self._typedCompare()
+        return False
+
 class QueryFilter():
     def __init__(self, DG, combine_operator: str, model_type: str, operator: str, value: str):
         self.combineOp = CombineOperator(forcetype.string(combine_operator).upper())
@@ -38,14 +66,7 @@ class QueryResult():
         strType = val.split(self.G.delimiter)[0]
         strVal = val.split(self.G.delimiter)[1]
         if strType == self.QF.strModelType:
-            if self.QF.filterOp == Operator.EQUALS:
-                return True if forcetype.string(strVal) == self.QF.strValue else False
-            elif self.QF.filterOp == Operator.NOTEQUALS:
-                return True if forcetype.string(strVal) != self.QF.strValue else False
-            elif self.QF.filterOp == Operator.LESS_THAN:
-                return True if forcetype.string(strVal) < self.QF.strValue else False
-            elif self.QF.filterOp == Operator.GREATER_THAN:
-                return True if forcetype.string(strVal) > self.QF.strValue else False
+            return TypedCompare(strVal, self.QF.filterOp, self.QF.strValue).result()
         return False #wrong type?
     def result(self) -> list:
         res = []

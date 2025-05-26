@@ -40,6 +40,12 @@ q = DG.query().perspective('Layer2') \
               .restrictions([('Layer2_criteria', 'eq', 'True')]) \
               .result() 
 print(json.dumps(q, indent=2))
+print('Query example 4:Layer1, Layer2_description from Layer2 if Layer2_criteria ne True')
+q = DG.query().perspective('Layer2') \
+              .attributes('Layer1', 'Layer2_description') \
+              .restrictions([('Layer2_criteria', 'ne', 'True')]) \
+              .result() 
+print(json.dumps(q, indent=2))
 print('---------------------------')
 print('Expecting an exception:')
 try:
