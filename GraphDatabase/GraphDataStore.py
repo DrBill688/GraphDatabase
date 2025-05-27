@@ -45,4 +45,6 @@ class GraphDataStore:
             self.edges.loc[(self.edges['ParentType'] == pt) & (self.edges['ParentValue'] == pv) & \
                            (self.edges['ChildType'] == ct) & (self.edges['ChildValue'] == cv), 'SourceRef'] = json.dumps(existing_sr)
         return self
+    def listModelFields(self) -> list:
+        return list(set(self.model['ParentType'].to_list()) | set (self.model['ChildType'].to_list()))
     

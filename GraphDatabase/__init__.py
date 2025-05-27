@@ -38,6 +38,8 @@ class GraphDatabase:
         node = f'{node_type}{self.delimiter}{node_val}'
         return [(m.split(self.delimiter)[0], m.split(self.delimiter)[1]) for m in self.G.predecessors(node) if len(m.split(self.delimiter)) == 2]
     def fieldList(self) -> list:
+        print(f'fieldList ->\tin memory:({len(list(self.G.successors(self._MODEL_TYPE)))}) {list(self.G.successors(self._MODEL_TYPE))}')
+        print(f'\t\t\tin datastore:({len(self.RDBMS.listModelFields())}) {self.RDBMS.listModelFields()}')
         return list(self.G.successors(self._MODEL_TYPE))
     def findall(self, model_type: str) -> list:
         prefix = f'{model_type}{self.delimiter}'
