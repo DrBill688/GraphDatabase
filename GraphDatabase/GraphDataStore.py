@@ -30,4 +30,19 @@ class GraphDataStore:
             existing_sr.append(sr)
             self.model.loc[(self.model['ParentType'] == pt) & (self.model['ChildType'] == ct), 'SourceRef'] = json.dumps(existing_sr)
         return self
+    def addEdge(self, pt, pv, ct, cv, sr)-> Self:
+        matching_row = self.edges[(self.edges['ParentType'] == pt) & (self.edges['ParentValue'] == pv) & \
+                                  (self.edges['ChildType'] == ct) & (self.edges['ChildValue'] == cv)] 
+        if len(matching_row) == 0:
+            self.edges.loc[len(self.edges)] = [pt, pv, ct, cv, sr]
+        else:
+            existing_sr = matching_row['SourceRef'].iloc[0]
+            try:
+                existing_sr = json.loads(existing_sr)
+            except:
+                existing_sr = [existing_sr]
+            existing_sr.append(sr)
+            self.edges.loc[(self.edges['ParentType'] == pt) & (self.edges['ParentValue'] == pv) & \
+                           (self.edges['ChildType'] == ct) & (self.edges['ChildValue'] == cv), 'SourceRef'] = json.dumps(existing_sr)
+        return self
     

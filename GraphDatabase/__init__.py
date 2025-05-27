@@ -95,6 +95,7 @@ class GraphDatabase:
         self.addEdge(strParentType, uNode, strSourceRef)
         self.addEdge(strChildType, vNode, strSourceRef)
         self.addEdge(uNode, vNode, strSourceRef)
+        self.RDBMS.addEdge(strParentType, strParentValue, strChildType, strChildValue, strSourceRef)
         return self
     def traverse(self, start_type: str, start_value:str) -> list:
         return [(m[0].split(self.delimiter)[0], m[0].split(self.delimiter)[1], m[1].split(self.delimiter)[0], m[1].split(self.delimiter)[1]) for m in nx.edge_bfs(self.G, f'{start_type}{self.delimiter}{start_value}')]
